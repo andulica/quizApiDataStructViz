@@ -25,4 +25,4 @@ jobs:
         run: dotnet restore ./QuizAPI.sln
 
       - name: Build
-        run: dotnet build ./QuizAPI/QuizAPI/QuizAPI.csproj --configuration Release --no-restore
+        run: dotnet build ./QuizAPI/QuizAPI.csproj --configuration Release --no-restore
