@@ -1,24 +1,28 @@
-#github action to deploy quiz api to azure
+# GitHub action to deploy quiz api to azure
 
 name: Deploy Quiz API 
 
 on: 
- workflow_dispatch:
- 
+  workflow_dispatch: # Allows manual triggering
+  push: # Trigger on pushes to main branch
+    branches:
+      - main
+
 jobs:
-    build:
-        runs-on: windows-latest
-        steps:
-            - uses: actions/checkout@v3
-            - name: Setup .NET Core
-              uses: actions/setup-dotnet@v3
-              with:
-                dotnet-version: 8.0.x
+  build:
+    runs-on: windows-latest
 
-            - name: Install dependencies
-              run: dotnet restore ./QuizAPI/QuizAPI/QuizAPI.csproj
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-            - name: Build
-              run: donet build ./QuizAPI/QuizAPI/QuizAPI.csproj --configuration Release --no-restore
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x' # Ensure your project uses this version
 
-  
+      - name: Install dependencies
+        run: dotnet restore ./QuizAPI.sln
+
+      - name: Build
+        run: dotnet build ./QuizAPI/QuizAPI/QuizAPI.csproj --configuration Release --no-restore
