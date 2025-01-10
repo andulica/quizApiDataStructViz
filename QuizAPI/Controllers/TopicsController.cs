@@ -37,7 +37,7 @@ namespace QuizAPI.Controllers
         // Public: Both clients and admin can access this endpoint
         // GET: api/topics/{id}
         [AllowAnonymous]
-        [HttpGet("{topicName}")]
+        [HttpGet("{topicName}/questions")]
         public async Task<IActionResult> GetTopic(string topicName)
         {
             var topic = await _context.Topics
@@ -50,7 +50,7 @@ namespace QuizAPI.Controllers
                 return NotFound($"Topic with Name '{topicName}' not found.");
             }
 
-            return Ok(topic);
+            return Ok(topic.Questions);
         }
 
         // Private: Accessed only by admin
