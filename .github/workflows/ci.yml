@@ -3,10 +3,10 @@
 name: Deploy Quiz API 
 
 on: 
-  # Trigger deployment on push to the main branch
+  # Trigger deployment on push to the master branch
   push:
     branches:
-      - main
+      - master
   # Allow manual triggering of the workflow
   workflow_dispatch:
 
