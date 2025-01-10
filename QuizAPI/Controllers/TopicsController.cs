@@ -52,7 +52,7 @@ namespace QuizAPI.Controllers
 
             return Ok(topic.Questions);
         }
-
+        // commit test for github actions yaml file configuration
         // Private: Accessed only by admin
         // POST: api/topics
         [Authorize(Roles = "Admin")]
