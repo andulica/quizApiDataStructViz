@@ -37,19 +37,18 @@ namespace QuizAPI.Controllers
         // Public: Both clients and admin can access this endpoint
         // GET: api/topics/{id}
         [AllowAnonymous]
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetTopic(int id)
+        [HttpGet("{topicName}")]
+        public async Task<IActionResult> GetTopic(string topicName)
         {
-            if (id <= 0)
-                return BadRequest("Invalid Topic ID.");
-
             var topic = await _context.Topics
-                .Include(t => t.Questions)
-                .ThenInclude(q => q.Answers)
-                .FirstOrDefaultAsync(t => t.TopicId == id);
+            .Include(t => t.Questions)
+            .ThenInclude(q => q.Answers)
+            .FirstOrDefaultAsync(t => t.Name == topicName);
 
             if (topic == null)
-                return NotFound($"Topic with ID {id} not found.");
+            {
+                return NotFound($"Topic with Name '{topicName}' not found.");
+            }
 
             return Ok(topic);
         }
