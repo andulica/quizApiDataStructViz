@@ -62,13 +62,18 @@ namespace QuizAPI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (await _context.Topics.AnyAsync(t => t.Name == topic.Name))
-                return Conflict("A topic with the same name already exists.");
+            foreach (var question in topic.Questions)
+            {
+                if (!question.Answers.Any(a => a.IsCorrect))
+                {
+                    return BadRequest($"Question '{question.QuestionText}' must have at least one correct answer.");
+                }
+            }
 
             _context.Topics.Add(topic);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetTopic), new { topicName = topic.Name }, topic);
+            return CreatedAtAction(nameof(GetTopic), new { id = topic.TopicId }, topic);
         }
 
         // Private: Accessed only by admin
