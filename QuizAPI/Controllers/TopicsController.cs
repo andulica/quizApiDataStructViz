@@ -77,21 +77,21 @@ namespace QuizAPI.Controllers
         }
 
         // Private: Accessed only by admin
-        // PUT: api/topics/{id}
+        // PUT: api/topics/{name}
         [Authorize(Roles = "Admin")]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTopic(int id, [FromBody] Topic updatedTopic)
+        [HttpPut("{name}")]
+        public async Task<IActionResult> UpdateTopic(string name, [FromBody] Topic updatedTopic)
         {
-            if (id <= 0 || id != updatedTopic.TopicId)
-                return BadRequest("Invalid or mismatched Topic ID.");
+            if (string.IsNullOrWhiteSpace(name) || !string.Equals(name, updatedTopic.Name, StringComparison.OrdinalIgnoreCase))
+                return BadRequest("Invalid or mismatched Topic Name.");
 
             var existingTopic = await _context.Topics
                 .Include(t => t.Questions)
                 .ThenInclude(q => q.Answers)
-                .FirstOrDefaultAsync(t => t.TopicId == id);
+                .FirstOrDefaultAsync(t => t.Name == name);
 
             if (existingTopic == null)
-                return NotFound($"Topic with ID {id} not found.");
+                return NotFound($"Topic with Name '{name}' not found.");
 
             // Update topic details
             existingTopic.Name = updatedTopic.Name;
@@ -125,6 +125,14 @@ namespace QuizAPI.Controllers
                 {
                     existingTopic.Questions.Add(updatedQuestion);
                 }
+            }
+
+            // Remove any questions in the database that are no longer in the update
+            var updatedQuestionIds = updatedTopic.Questions.Select(q => q.QuestionId).ToHashSet();
+            var questionsToRemove = existingTopic.Questions.Where(q => !updatedQuestionIds.Contains(q.QuestionId)).ToList();
+            foreach (var question in questionsToRemove)
+            {
+                _context.Questions.Remove(question);
             }
 
             await _context.SaveChangesAsync();
