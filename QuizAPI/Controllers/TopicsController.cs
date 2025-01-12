@@ -52,7 +52,7 @@ namespace QuizAPI.Controllers
 
             return Ok(topic.Questions);
         }
-        // commit test for github actions yaml file configuration
+
         // Private: Accessed only by admin
         // POST: api/topics
         [Authorize(Roles = "Admin")]
@@ -68,7 +68,7 @@ namespace QuizAPI.Controllers
             _context.Topics.Add(topic);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetTopic), new { id = topic.TopicId }, topic);
+            return CreatedAtAction(nameof(GetTopic), new { topicName = topic.Name }, topic);
         }
 
         // Private: Accessed only by admin
