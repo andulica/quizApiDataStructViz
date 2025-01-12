@@ -73,7 +73,7 @@ namespace QuizAPI.Controllers
             _context.Topics.Add(topic);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetTopic), new { id = topic.TopicId }, topic);
+            return Ok(topic);
         }
 
         // Private: Accessed only by admin
