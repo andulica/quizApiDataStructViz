@@ -93,46 +93,90 @@ namespace QuizAPI.Controllers
             if (existingTopic == null)
                 return NotFound($"Topic with Name '{name}' not found.");
 
-            // Update topic details
             existingTopic.Name = updatedTopic.Name;
 
-            // Update or add questions
             foreach (var updatedQuestion in updatedTopic.Questions)
             {
-                var existingQuestion = existingTopic.Questions.FirstOrDefault(q => q.QuestionId == updatedQuestion.QuestionId);
-
-                if (existingQuestion != null)
+                if (updatedQuestion.QuestionId == 0)
                 {
-                    existingQuestion.QuestionText = updatedQuestion.QuestionText;
+                    var newQuestion = new Question
+                    {
+                        QuestionText = updatedQuestion.QuestionText,
+                        Answers = new List<Answer>()
+                    };
 
-                    // Update or add answers
                     foreach (var updatedAnswer in updatedQuestion.Answers)
                     {
-                        var existingAnswer = existingQuestion.Answers.FirstOrDefault(a => a.AnswerId == updatedAnswer.AnswerId);
-
-                        if (existingAnswer != null)
+                        var newAnswer = new Answer
                         {
-                            existingAnswer.AnswerText = updatedAnswer.AnswerText;
-                            existingAnswer.IsCorrect = updatedAnswer.IsCorrect;
-                        }
-                        else
-                        {
-                            existingQuestion.Answers.Add(updatedAnswer);
-                        }
+                            AnswerText = updatedAnswer.AnswerText,
+                            IsCorrect = updatedAnswer.IsCorrect
+                        };
+                        newQuestion.Answers.Add(newAnswer);
                     }
+
+                    existingTopic.Questions.Add(newQuestion);
                 }
                 else
                 {
-                    existingTopic.Questions.Add(updatedQuestion);
+                    var existingQuestion = existingTopic.Questions
+                       .FirstOrDefault(q => q.QuestionId == updatedQuestion.QuestionId);
+
+                    if (existingQuestion == null)
+                    {
+                        return BadRequest($"Question ID {updatedQuestion.QuestionId} not found in topic.");
+                    }
+
+                    existingQuestion.QuestionText = updatedQuestion.QuestionText;
+
+                    foreach (var updatedAnswer in updatedQuestion.Answers)
+                    {
+                        if (updatedAnswer.AnswerId == 0)
+                        {
+                            // new answer
+                            existingQuestion.Answers.Add(new Answer
+                            {
+                                AnswerText = updatedAnswer.AnswerText,
+                                IsCorrect = updatedAnswer.IsCorrect
+                            });
+                        }
+                        else
+                        {
+                            // existing answer
+                            var existingAnswer = existingQuestion.Answers
+                                .FirstOrDefault(a => a.AnswerId == updatedAnswer.AnswerId);
+
+                            if (existingAnswer == null)
+                            {
+                                return BadRequest(
+                                    $"Answer ID {updatedAnswer.AnswerId} not found under Question ID {updatedQuestion.QuestionId}.");
+                            }
+
+                            existingAnswer.AnswerText = updatedAnswer.AnswerText;
+                            existingAnswer.IsCorrect = updatedAnswer.IsCorrect;
+                        }
+                    }
+
+                    // Remove old answers if no longer present in updatedQuestion
+                    var updatedAnswerIds = updatedQuestion.Answers.Select(a => a.AnswerId).ToHashSet();
+                    var answersToRemove = existingQuestion.Answers
+                        .Where(a => !updatedAnswerIds.Contains(a.AnswerId))
+                        .ToList();
+                    foreach (var answerToRemove in answersToRemove)
+                    {
+                        _context.Answers.Remove(answerToRemove);
+                    }
                 }
             }
 
-            // Remove any questions in the database that are no longer in the update
             var updatedQuestionIds = updatedTopic.Questions.Select(q => q.QuestionId).ToHashSet();
-            var questionsToRemove = existingTopic.Questions.Where(q => !updatedQuestionIds.Contains(q.QuestionId)).ToList();
-            foreach (var question in questionsToRemove)
+            var questionsToRemove = existingTopic.Questions
+                .Where(q => !updatedQuestionIds.Contains(q.QuestionId))
+                .ToList();
+
+            foreach (var questionToRemove in questionsToRemove)
             {
-                _context.Questions.Remove(question);
+                _context.Questions.Remove(questionToRemove);
             }
 
             await _context.SaveChangesAsync();
