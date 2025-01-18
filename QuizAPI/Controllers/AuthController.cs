@@ -26,9 +26,8 @@ public class AuthController : ControllerBase
 
     // POST: api/auth/login
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginModel model)
+    public async Task<IActionResult> AdminLogin([FromBody] LoginModel model)
     {
-        // 1. Check credentials
         var result = await _signInManager.PasswordSignInAsync(
             model.Email,
             model.Password,
@@ -36,17 +35,19 @@ public class AuthController : ControllerBase
             lockoutOnFailure: false);
 
         if (!result.Succeeded)
-        {
             return Unauthorized("Invalid credentials.");
+
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+            return Unauthorized("User not found.");
+
+        bool isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+        if (!isAdmin)
+        {
+            return Forbid("You are not an admin user.");
         }
 
-        // 2. Fetch user and roles
-        var user = await _userManager.FindByEmailAsync(model.Email);
-        if (user == null) return Unauthorized("User not found.");
-
         var roles = await _userManager.GetRolesAsync(user);
-
-        // 3. Generate JWT
         var token = GenerateJwtToken(user, roles);
 
         return Ok(new { Token = token });
